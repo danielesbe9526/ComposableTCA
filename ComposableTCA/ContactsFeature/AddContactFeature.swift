@@ -21,6 +21,8 @@ struct AddContactFeature {
         case saveButtonTapped
         case setName(String)
         
+        /// Hace que se pueda acceder por path a cada case
+        @CasePathable
         enum Delegate: Equatable {
             case saveContact(Contact)
         }

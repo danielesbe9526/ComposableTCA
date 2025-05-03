@@ -26,18 +26,19 @@ struct ContactsFeature {
         case destination(PresentationAction<Destination.Action>)
         case deleteButtonTapped(id: Contact.ID)
 
-        
+        @CasePathable
         enum Alert: Equatable {
             case confirmDeletion(id: Contact.ID)
         }
     }
     
+    @Dependency(\.uuid) var uuid
+    
     var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case .addButtonTapped:
-                state.destination = .addContact(AddContactFeature.State(contact: Contact(id: UUID(),
-                                                                                         name: "")))
+                state.destination = .addContact(AddContactFeature.State(contact: Contact(id: self.uuid(),                                             name: "")))
                 return .none
 
             case .destination(.presented(.addContact(.delegate(.saveContact(let contact))))):
@@ -52,15 +53,7 @@ struct ContactsFeature {
                 return .none
                 
             case .deleteButtonTapped(let id):
-                state.destination = .alert(
-                    AlertState(title: {
-                        TextState("Are you sure?")
-                    }, actions: {
-                        ButtonState(role: .destructive, action: .confirmDeletion(id: id)) {
-                            TextState("Delete")
-                        }
-                    })
-                )
+                state.destination = .alert(.deleteConfirmation(id: id))
                 
                 return .none
             }
@@ -79,3 +72,14 @@ extension ContactsFeature {
 
 extension ContactsFeature.Destination.State: Equatable {}
 
+extension AlertState where Action == ContactsFeature.Action.Alert {
+    static func deleteConfirmation(id: UUID) -> Self {
+        Self {
+            TextState("Are you sure?")
+        } actions: {
+            ButtonState(role:.destructive, action: .confirmDeletion(id: id)) {
+                TextState("Delete")
+            }
+        }
+    }
+}
